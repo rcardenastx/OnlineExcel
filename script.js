@@ -27,6 +27,40 @@ function renderTable(data) {
   data.slice(1).forEach(row => {
     html += '<tr>';
     row.forEach(cell => {
+      html += `<td>${formatCell(cell)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function formatCell(cell) {
+  // Format Excel-style decimal times to readable time
+  if (typeof cell === 'number' && cell > 0 && cell < 1) {
+    const totalMinutes = Math.round(cell * 24 * 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    const hour12 = hours % 12 || 12;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  }
+  return cell ?? '';
+}
+
+
+  let html = '<table><thead><tr>';
+  data[0].forEach(header => {
+    html += `<th>${header}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  data.slice(1).forEach(row => {
+    html += '<tr>';
+    row.forEach(cell => {
       html += `<td>${cell ?? ''}</td>`;
     });
     html += '</tr>';
