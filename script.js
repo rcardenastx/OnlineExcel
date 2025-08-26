@@ -1,19 +1,26 @@
 async function loadExcel() {
-  const url = 'https://raw.githubusercontent.com/rcardenastx/OnlineExcel/main/data.xlsx'; // 
-  const response = await fetch(url);
-  const data = await response.arrayBuffer();
+  const url = 'https://raw.githubusercontent.com/rcardenastx/OnlineExcel/main/data.xlsx';
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not OK');
+    
+    const data = await response.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
 
-  const workbook = XLSX.read(data, { type: 'array' });
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // Get 2D array
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-  renderTable(json);
+    renderTable(json);
+  } catch (error) {
+    document.getElementById('table-container').innerText = 'Failed to load Excel file.';
+    console.error('Error loading Excel:', error);
+  }
 }
 
 function renderTable(data) {
   const container = document.getElementById('table-container');
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     container.innerHTML = 'No data found.';
     return;
   }
@@ -24,20 +31,20 @@ function renderTable(data) {
   });
   html += '</tr></thead><tbody>';
 
-  data.slice(1).forEach(row => {
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
     html += '<tr>';
     row.forEach(cell => {
       html += `<td>${formatCell(cell)}</td>`;
     });
     html += '</tr>';
-  });
+  }
 
   html += '</tbody></table>';
   container.innerHTML = html;
 }
 
 function formatCell(cell) {
-  // Format Excel-style decimal times to readable time
   if (typeof cell === 'number' && cell > 0 && cell < 1) {
     const totalMinutes = Math.round(cell * 24 * 60);
     const hours = Math.floor(totalMinutes / 60);
@@ -48,26 +55,21 @@ function formatCell(cell) {
 
     return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   }
+
+  // If it's a date serial number (e.g., 45887 = Excel date)
+  if (typeof cell === 'number' && cell > 30000) {
+    const date = XLSX.SSF.parse_date_code(cell);
+    if (date) {
+      return `${date.y}-${pad(date.m)}-${pad(date.d)}`;
+    }
+  }
+
   return cell ?? '';
 }
 
-
-  let html = '<table><thead><tr>';
-  data[0].forEach(header => {
-    html += `<th>${header}</th>`;
-  });
-  html += '</tr></thead><tbody>';
-
-  data.slice(1).forEach(row => {
-    html += '<tr>';
-    row.forEach(cell => {
-      html += `<td>${cell ?? ''}</td>`;
-    });
-    html += '</tr>';
-  });
-
-  html += '</tbody></table>';
-  container.innerHTML = html;
+function pad(n) {
+  return n.toString().padStart(2, '0');
 }
 
+// Start loading
 loadExcel();
