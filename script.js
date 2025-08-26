@@ -56,7 +56,7 @@ function formatCell(cell) {
     return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   }
 
-  // If it's a date serial number (e.g., 45887 = Excel date)
+ 
   if (typeof cell === 'number' && cell > 30000) {
     const date = XLSX.SSF.parse_date_code(cell);
     if (date) {
